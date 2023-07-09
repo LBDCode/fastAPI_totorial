@@ -18,12 +18,13 @@ class Book:
     rating: int
     published_date: int
 
-    def __init__(self, id, title, author, description, rating):
+    def __init__(self, id, title, author, description, rating, publishe_date):
         self.id = id
         self.title = title
         self.author = author
         self.description = description
         self.rating = rating
+        self.published_date = publishe_date
 
 
 class BookRequest(BaseModel):
@@ -32,6 +33,7 @@ class BookRequest(BaseModel):
     author: str = Field(min_length=1)
     description: str = Field(min_length=1, max_length=500)
     rating: int = Field(gt=0, lt=10)
+    published_date: int
 
     class Config:
         schema_extra = {
@@ -40,18 +42,19 @@ class BookRequest(BaseModel):
                 'author': 'An Author', 
                 'description': 'Description of the New Book',
                 'rating': 4,
+                'published_date': 2018
             }
         }
     
 
 BOOKS = [
     Book(1, 'Automate the Boring Stuff with Python', 'Al Sweigart', 
-    'Learn how to use Python to write programs that do in minutes what would take you hours to do by hand', 8),
+    'Learn how to use Python to write programs that do in minutes what would take you hours to do by hand', 8, 1995),
     Book(2, 'Grokking Algorithms', ' Aditya Bhargava', 
-    'An Illustrated Guide for Programmers and Other Curious People', 7),
+    'An Illustrated Guide for Programmers and Other Curious People', 7, 2004),
     Book(3, 'Data Structures the Fun Way', 'Jeremy Kubica', 
     'Learn how and when to use the right data structures in any situation, strengthening your computational thinking, problem-solving, and programming skills in the process.',
-     6),
+     6, 2019),
 ]
 
 @app.get("/books")
@@ -75,6 +78,15 @@ async def get_book_by_rading(book_rating: int):
     return books_to_return
 
 
+@app.get("/books_by_year/{published_date}")
+async def get_books_by_year(published_date: int):
+    books_to_return = []
+    for book in BOOKS:
+        if book.published_date == published_date:
+            books_to_return.append(book)
+    return books_to_return
+
+
 @app.put("/books/update_book")
 async def update_book(book: BookRequest):
     for i in range(len(BOOKS)):
@@ -93,3 +105,9 @@ def assign_book_id(book: Book):
     return book
 
 
+@app.delete("/books/{book_id}")
+async def delete_book(book_id: int):
+    for i in range(len(BOOKS)):
+        if BOOKS[i].id == book_id:
+            BOOKS.pop()
+            break
