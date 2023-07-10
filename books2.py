@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import FastAPI, Body, Path, Query, HTTPException
 from pydantic import BaseModel, Field
 from starlette import status
-
+import datetime
 
 app = FastAPI()
 BOOKS = []
@@ -63,14 +63,14 @@ async def read_all_books():
 
 
 @app.get("/books/{book_id}")
-async def get_book_by_id(book_id: int):
+async def get_book_by_id(book_id: int = Path(gt=0)):
     for book in BOOKS:
         if book.id == book_id:
             return book
 
 
 @app.get("/books_by_rating/{rating}")
-async def get_book_by_rading(book_rating: int):
+async def get_book_by_rading(book_rating: int = Query(gt=0, lt=11)):
     books_to_return = []
     for book in BOOKS:
         if book.rating == book_rating:
@@ -78,8 +78,11 @@ async def get_book_by_rading(book_rating: int):
     return books_to_return
 
 
-@app.get("/books_by_year/{published_date}")
-async def get_books_by_year(published_date: int):
+today = datetime.date.today()
+year = today.year
+
+@app.get("/books_by_year/published_date")
+async def get_books_by_year(published_date: int = Query(gt=1900, lt=year)):
     books_to_return = []
     for book in BOOKS:
         if book.published_date == published_date:
@@ -106,7 +109,7 @@ def assign_book_id(book: Book):
 
 
 @app.delete("/books/{book_id}")
-async def delete_book(book_id: int):
+async def delete_book(book_id: int = Path(gt=0)):
     for i in range(len(BOOKS)):
         if BOOKS[i].id == book_id:
             BOOKS.pop()
