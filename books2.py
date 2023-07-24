@@ -57,19 +57,21 @@ BOOKS = [
      6, 2019),
 ]
 
-@app.get("/books")
+@app.get("/books", status_code=status.HTTP_200_OK)
 async def read_all_books():
     return BOOKS
 
 
-@app.get("/books/{book_id}")
+@app.get("/books/{book_id}", status_code=status.HTTP_200_OK)
 async def get_book_by_id(book_id: int = Path(gt=0)):
     for book in BOOKS:
         if book.id == book_id:
             return book
+    
+    raise HTTPException(status_code=404, detail='Item not found')
 
 
-@app.get("/books_by_rating/{rating}")
+@app.get("/books_by_rating/{rating}", status_code=status.HTTP_200_OK)
 async def get_book_by_rading(book_rating: int = Query(gt=0, lt=11)):
     books_to_return = []
     for book in BOOKS:
@@ -81,7 +83,7 @@ async def get_book_by_rading(book_rating: int = Query(gt=0, lt=11)):
 today = datetime.date.today()
 year = today.year
 
-@app.get("/books_by_year/published_date")
+@app.get("/books_by_year/published_date", status_code=status.HTTP_200_OK)
 async def get_books_by_year(published_date: int = Query(gt=1900, lt=year)):
     books_to_return = []
     for book in BOOKS:
@@ -90,14 +92,17 @@ async def get_books_by_year(published_date: int = Query(gt=1900, lt=year)):
     return books_to_return
 
 
-@app.put("/books/update_book")
+@app.put("/books/update_book", status_code=status.HTTP_204_NO_CONTENT)
 async def update_book(book: BookRequest):
+    book_changed = False
     for i in range(len(BOOKS)):
         if BOOKS[i].id == book.id:
             BOOKS[i] = book
+            book_changed = True
+    if not book_changed:
+         raise HTTPException(status_code=404, detail='Item not found')
 
-
-@app.post("/create_book")
+@app.post("/create_book", status_code=status.HTTP_201_CREATED)
 async def create_book(book_request: BookRequest):
     new_book = Book(**book_request.dict())
     BOOKS.append(assign_book_id(new_book))
@@ -108,9 +113,13 @@ def assign_book_id(book: Book):
     return book
 
 
-@app.delete("/books/{book_id}")
+@app.delete("/books/{book_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_book(book_id: int = Path(gt=0)):
+    book_changed = False
     for i in range(len(BOOKS)):
         if BOOKS[i].id == book_id:
             BOOKS.pop()
+            book_changed = True
             break
+    if not book_changed:
+        raise HTTPException(status_code=404, detail='Item not found')
